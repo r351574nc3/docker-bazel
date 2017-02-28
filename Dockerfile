@@ -1,5 +1,9 @@
 FROM buildpack-deps:jessie-scm
-MAINTAINER Leo Przybylski <r351574nc3@gmail.com>
+
+# Setup repos
+RUN curl -fsSL https://apt.dockerproject.org/gpg | apt-key add - \
+	&& apt-key fingerprint 58118E89F3A912897C070ADBF76221572C52609D \
+	&& echo "deb [arch=amd64] http://apt.dockerproject.org/repo/ debian-jessie main" | tee /etc/apt/sources.list.d/docker.list
 
 # gcc for cgo
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -10,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 		pkg-config \
         zlib1g-dev \
         bash-completion \
+		docker-engine \
         unzip \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -37,9 +42,7 @@ COPY go-wrapper /usr/local/bin/
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		bzip2 \
 		unzip \
-		xz-utils \
-	&& rm -rf /var/lib/apt/lists/*
-
+		xz-utils
 RUN echo 'deb http://deb.debian.org/debian jessie-backports main' > /etc/apt/sources.list.d/jessie-backports.list
 
 # Default to UTF-8 file.encoding
@@ -75,10 +78,20 @@ RUN set -x \
 # see CA_CERTIFICATES_JAVA_VERSION notes above
 RUN /var/lib/dpkg/info/ca-certificates-java.postinst configure
 
+# Install Bazel
 RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list \
     && curl https://bazel.build/bazel-release.pub.gpg | apt-key add - \
     && apt-get update && apt-get install bazel \
 	&& apt-get clean all \
-	&& mkdir -p /workspace
+	&& rm -rf /var/lib/apt/lists/* \
+	&& bazel 
+	
+RUN curl -O https://bootstrap.pypa.io/get-pip.py \
+	&& python get-pip.py 
 
-WORKDIR /workspace
+ENV PATH $HOME/.local/bin:$PATH
+
+RUN pip install --upgrade awscli \
+	&& rm get-pip.py
+
+COPY bazel /bazel
