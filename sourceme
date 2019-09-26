@@ -1,0 +1,1 @@
+alias bazel='docker run --rm -v $PWD:$PWD -w $PWD -e BAZELRC=$PWD/.bazelrc -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID --privileged bazel-0.4.4-jessie /bazel'

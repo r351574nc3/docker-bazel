@@ -1,0 +1,5 @@
+#!/bin/sh
+
+service docker start
+
+exec /usr/bin/bazel $@
